@@ -1,2 +1,2 @@
 # D3-challenge
-An analysis of health risks affecting certain demographics using D3
+A D3 analysis of health risks affecting certain demographics throughout the United States.
