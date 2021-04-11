@@ -1,6 +1,6 @@
-alert("Hello!");
 // This project will entail the construction of an interactive dashboard
 // It will highlight the correlation between poverty and obesity in the United States on a state by state basis
+
 // Pre-Data Setup
 
 var width = parseInt(d3.select("#scatter").style("width"));
@@ -215,4 +215,145 @@ function visualize(data) {
         .attr("class", "yAxis")
         .attr("transform", `translate(${margin + labelArea}, 0)`)
 
-}
+    var theCircles = svg.selectAll("g theCircles").data(data).enter()
+
+    theCircles.append("circle")
+        .attr("cx", function(d){
+            return xScale(d[curX]);
+        })
+        .attr("cy", function(d){
+            return yScale(d[curY]);
+        })
+        .attr("r", circleRadius)
+        .attr("class", function(d){
+            return `stateCircle ${d.abbr}`
+        })
+        .on("mouseover", function(d){
+            toolTip.show(d, this);
+            d3.select(this).style("stroke", "#323232");
+        })
+        .on("mouseout", function(d){
+            toolTip.hide(d)
+            d3.select(this).style("stroke", "#e3e3e3");
+        });
+    
+        theCircles
+            .append("text")
+            .text(function(d){
+                return d.abbr
+
+            }).attr("dx", function(d){
+                return xScale(d[curX]) - (circleRadius / 2.7)
+
+            }).attr("dy", function(d){
+                return yScale(d[curY]) + (circleRadius/2.5)
+
+            })
+            .attr("font-size", circleRadius)
+            .attr("class", "stateText")
+            .on("mouseover", function(d) {
+                toolTip.show(d)
+                d3.select(`.${d.abbr}`).style("stroke", "#e3e3e3");
+            })
+
+            d3.selectAll(".aText").on("click", function(){
+                var self = d3.select(this);
+
+                if(self.classed("inactive")){
+                    var axis = self.attr("data-axis");
+                    var name = self.attr("data-name");
+
+                    if(axis === "x"){
+                        curX = name;
+
+                        xMinMax();
+
+                        xScale.domain([xMin, xMax])
+                        svg.select(".xAxis").transition().duration(300).call(xAxis);
+
+                        d3.selectAll("circle").each(function(){
+                            d3.select(this)
+                            .transition()
+                            .attr("cx", function(d) {
+                                return xScale(d[curX])
+                            })
+                            .duration(300)
+                        })
+
+                        d3.selectAll(".stateText").each(function(){
+                            d3.select(this)
+                            .transition()
+                            .attr("dx", function(d){
+                                return xScale(d[curX])
+                            })
+                            .duration(300)
+                        })
+
+                        labelChange(axis, self);
+
+                    } else {
+                        curY = name;
+
+                        yMinMax();
+
+                        yScale.domain([yMin, yMax]);
+
+                        svg.select(".yAxis").transition().duration(300).call(yAxis)
+
+                        d3.selectAll("circle").each(function(d){
+                            d3.select(this)
+                            .transition()
+                            .attr("cy", function(){
+                                return yScale(d[curY]);
+                            }).duration(300)
+                        })
+
+                        d3.selectAll(".stateText").each(function(){
+                            d3.select(this)
+                            .transition()
+                            .attr("dy", function(d){
+                                return yScale(d[curY]) + (circleRadius/3)
+                            }).duration(300)
+                        })
+
+                        labelChange(axis, self);
+                    }
+                }
+            });
+
+            d3.select(window).on("resize", resize);
+
+            function resize(){
+                width = parseInt(d3.select("#scalar").style("width"))
+                height = width - width/3;
+                leftTextY = (height + labelArea) / 2 - labelArea;
+
+                svg.attr("width", width).attr("height", height)
+                xScale.range([margin + labelArea, width - margin])
+                yScale.range([height - margin - labelArea, margin])
+
+                svg.select(".xaxis").call(xAxis)
+                    .attr("transform", `translate(0,${height - margin - labelArea})`);
+                svg.select(".yAxis").call(yAxis);
+
+                tickCount();
+                xTextRefresh();
+                yTextRefresh();
+                getCircle();
+
+                d3.selectAll("circle").attr("cy", function(d) {
+                    return yScale[curY]
+                }).attr("cx", function(d){
+                    return xScale(d[curX])
+                }).attr("r", function(){
+                    return circleRadius
+                })
+
+                d3.selectAll(".stateText").attr("dy", function(d){
+                    return yScale(d[curY]) + circleRadius/3;
+                })
+                .attr("dx", function(d){
+                    return xScale(d[curX])
+                }).attr("r", circleRadius/3);
+            }
+};
