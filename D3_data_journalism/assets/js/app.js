@@ -63,7 +63,7 @@ xText.append("text")
     .attr("data-axis", "x")
     .attr("class", "aText inactive x")
     .text("Household Income (Median");
-
+    
 // Left (y) Axis
 
 var leftTextX = margin + topPadLeft;
@@ -110,7 +110,8 @@ yText
 
 // Importing the data.csv file
 d3.csv("assets/data/data.csv").then(function(data) {
-    console.log(data);
+    console.log(data)
+    visualize(data);
 });
 
 // Function to visualize data
@@ -124,9 +125,10 @@ function visualize(data) {
     var yMin;
     var yMax;
     
-    var toolTip = d3.tip()
+    var toolTip = d3
+        .tip()
         .attr("class", "d3-tip")
-        .offset([40,-60])
+        .offset([40, -60])
         .html(function(d) {
             var theX;
             var theState = `<div>${d.state}</div>`;
@@ -141,6 +143,7 @@ function visualize(data) {
 
             return theState + theX + theY;
         });
+
     svg.call(toolTip);
 
     // Create axes for chart
@@ -154,7 +157,62 @@ function visualize(data) {
     }
 
     function yMinMax(){
-        yMin = d3.min(data,)
+        yMin = d3.min(data, function(d){
+            return parseFloat(d[curY]) * 0.90;
+        })
+        yMax = d3.max(data, function(d){
+            return parseFloat(d[curY]) * 1.10;
+        })
     }
+
+    // Alter appearances of label text upon click
+    function labelChange(axis, clickedText){
+        d3.selectAll(".aText")
+        .filter("." + axis)
+        .filter(".active")
+        .classed("active", false)
+        .classed("inactive", true);
+
+        clickedText.classed("inactive", false).classed("active", true);
+    }
+
+    // Getting the minimum and maximum values of x,y
+    xMinMax()
+    yMinMax();
+
+    var xScale = d3.scaleLinear()
+        .domain([xMin, xMax])
+        .range([margin + labelArea, width - margin])
+
+    var yScale = d3.scaleLinear()
+        .domain([yMin, yMax])
+        .range([height - margin - labelArea, margin]);
+
+    var xAxis = d3.axisBottom(xScale);
+    var yAxis = d3.axisLeft(yScale);
+
+    function tickCount(){
+        if(width <= 500){
+            xAxis.ticks(5);
+            yAxis.ticks(5);
+        }
+        else {
+            xAxis.ticks(10);
+            yAxis.ticks(10);
+        }
+    }
+
+    tickCount();
+
+    svg
+        .append("g")
+        .call(xAxis)
+        .attr("class", "xAxis")
+        .attr("transform", `translate(0, ${height - margin - labelArea})`)
+    svg
+        .append("g")
+        .call(yAxis)
+        .attr("class", "yAxis")
+        .attr("transform", `translate(${margin + labelArea}, 0)`)
 
 }
